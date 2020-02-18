@@ -6,15 +6,11 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
+@AttributeOverride(name = "id", column = @Column(name = "dislike_id"))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
-public class PostDislike extends BaseTimeEntity {
-
-    @Id
-    @GeneratedValue
-    @Column(name = "dislike_id")
-    private Long id;
+public class PostDislike extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")

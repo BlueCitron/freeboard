@@ -2,6 +2,7 @@ package bluecitron.sample.freeboard.domain;
 
 import bluecitron.sample.freeboard.domain.exception.InvalidOperationException;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -9,45 +10,60 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@AttributeOverride(name = "id", column = @Column(name = "post_id"))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
-public class Post extends BaseTimeEntity {
-
-    @Id
-    @GeneratedValue
-    @Column(name = "post_id")
-    private Long id;
+public class Post extends BaseEntity {
 
     @Column(length = 500)
     private String title;
 
+    @Lob
     private String content;
 
+    @Column(columnDefinition = "int default 0")
     private Integer viewCount;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member writer;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PostLike> postLikes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PostDislike> postDislikes = new ArrayList<>();
 
-    public Post(Category category, String title, String content, Member writer) {
-        this.category = category;
+    @Builder
+    protected Post(String title, String content, Integer viewCount, Category category, Member writer, List<PostLike> postLikes, List<PostDislike> postDislikes) {
         this.title = title;
         this.content = content;
+        this.viewCount = viewCount;
+        this.category = category;
         this.writer = writer;
-         this.viewCount = 0;
+        this.postLikes = postLikes;
+        this.postDislikes = postDislikes;
+    }
 
+    public static Post create(Category category, String title, String content, Member writer) {
+        Post post = new Post().builder()
+                .category(category)
+                .title(title)
+                .content(content)
+                .viewCount(0)
+                .writer(writer)
+                .postLikes(new ArrayList<PostLike>())
+                .postDislikes(new ArrayList<PostDislike>())
+                .build();
+
+        writer.getPosts().add(post);
         category.increasePostCount();
+        return post;
     }
 
     public PostLike like(Member member) throws InvalidOperationException{
@@ -84,5 +100,21 @@ public class Post extends BaseTimeEntity {
             throw new InvalidOperationException("싫어요 표시한 적이 없는 게시글입니다.");
 
         return isDeleted;
+    }
+
+    public Integer getLikeCount() {
+        return this.postLikes.size();
+    }
+
+    public Integer getDislikeCount() {
+        return this.postDislikes.size();
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }

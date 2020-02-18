@@ -1,4 +1,4 @@
-package bluecitron.sample.freeboard.dto;
+package bluecitron.sample.freeboard.model.dto;
 
 import lombok.Data;
 

@@ -1,9 +1,10 @@
 package bluecitron.sample.freeboard.service;
 
 import bluecitron.sample.freeboard.domain.Member;
-import bluecitron.sample.freeboard.domain.exception.InvalidOperationException;
-import bluecitron.sample.freeboard.dto.MemberDto;
+import bluecitron.sample.freeboard.model.command.MemberCommand;
 import bluecitron.sample.freeboard.repository.MemberRepository;
+import bluecitron.sample.freeboard.service.exception.DuplicatedAccountException;
+import bluecitron.sample.freeboard.service.exception.MemberEntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,29 +27,30 @@ public class MemberService implements UserDetailsService {
 
     private final MemberRepository memberRepository;
 
-    public Long join(MemberDto memberDto) {
-        Optional<Member> byAccount = memberRepository.findByAccount(memberDto.getAccount());
+    public Long join(MemberCommand memberCommand) {
+        String account = memberCommand.getAccount();
+        Optional<Member> byAccount = memberRepository.findByAccount(account);
+
         if (byAccount.isPresent()) {
-            throw new InvalidOperationException("이미 존재하는 계정입니다. [" + memberDto.getAccount() + "]");
+            throw new DuplicatedAccountException(account);
         }
 
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        memberDto.setPassword(passwordEncoder.encode(memberDto.getPassword()));
-        Member member = memberDto.toEntity();
+        Member member = Member.create(memberCommand.getNickname()
+                , memberCommand.getAccount()
+                , memberCommand.getPassword()
+                , memberCommand.getEmail());
+
         return memberRepository.save(member).getId();
     }
 
     @Override
     public UserDetails loadUserByUsername(String account) throws UsernameNotFoundException {
-        Optional<Member> memberWrapper = memberRepository.findByAccount(account);
+        Member member = memberRepository.findByAccount(account)
+                .orElseThrow(() -> new MemberEntityNotFoundException(account));
 
-        if (memberWrapper.isPresent()) {
-            Member member = memberWrapper.get();
-            List<GrantedAuthority> authorities = new ArrayList<>();
-            authorities.add(new SimpleGrantedAuthority(member.getGrade().toString()));
-            return new User(member.getAccount(), member.getPassword(), authorities);
-        } else {
-            throw new UsernameNotFoundException("The account is not found. [" + account +"]");
-        }
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(member.getGrade().toString()));
+        return new User(member.getAccount(), member.getPassword(), authorities);
     }
 }

@@ -1,4 +1,4 @@
-package bluecitron.sample.freeboard.web.member;
+package bluecitron.sample.freeboard.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

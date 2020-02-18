@@ -1,23 +1,11 @@
 package bluecitron.sample.freeboard.service.exception;
 
-public class InvalidRequestException extends RuntimeException {
-    public InvalidRequestException() {
-        super();
-    }
+public class InvalidRequestException extends SystemException {
+
+    String message;
 
     public InvalidRequestException(String message) {
         super(message);
-    }
-
-    public InvalidRequestException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public InvalidRequestException(Throwable cause) {
-        super(cause);
-    }
-
-    protected InvalidRequestException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
+        this.message = message;
     }
 }

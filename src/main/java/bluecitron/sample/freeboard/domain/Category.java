@@ -9,15 +9,11 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@AttributeOverride(name = "id", column = @Column(name = "category_id"))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
-public class Category extends BaseTimeEntity{
-
-    @Id
-    @GeneratedValue
-    @Column(name = "category_id")
-    private Long id;
+public class Category extends BaseEntity {
 
     @NonNull
     private String title;
@@ -31,10 +27,17 @@ public class Category extends BaseTimeEntity{
     @OneToMany(mappedBy = "parent")
     private List<Category> children = new ArrayList<>();
 
-    public Category(Category parent, String title) {
-        this.parent = parent;
+    protected Category(String title) {
         this.title = title;
         this.hasPostCount = 0;
+    }
+
+    public static Category create(String title) {
+        return new Category(title);
+    }
+
+    public void setParent(Category parent) {
+        this.parent = parent;
         parent.getChildren().add(this);
     }
 
